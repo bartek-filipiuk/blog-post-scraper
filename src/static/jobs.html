@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scraping Jobs - Blog Post Scraper</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: none;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 25px;
+        }
+        .job-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .job-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        .job-url {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            word-break: break-all;
+        }
+        .status-badge {
+            font-size: 0.9rem;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .status-pending {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .status-in_progress {
+            background-color: #17a2b8;
+            color: #fff;
+        }
+        .status-completed {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .status-failed {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .job-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .nav-link {
+            color: white !important;
+            font-weight: 500;
+        }
+        .nav-link:hover {
+            color: #ffd700 !important;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            display: none;
+        }
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        .error-message {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            color: #856404;
+            font-size: 0.9rem;
+        }
+        .refresh-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid white;
+            color: white;
+            transition: all 0.2s;
+        }
+        .refresh-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg mb-4" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 15px;">
+            <div class="container-fluid">
+                <a class="navbar-brand text-white fw-bold" href="/static/index.html">🔍 Blog Scraper</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/static/index.html">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/static/jobs.html">Jobs</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/static/results.html">Results</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Card -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-0">Scraping Jobs</h1>
+                    <p class="mb-0 mt-2">Monitor and manage scraping jobs</p>
+                </div>
+                <button class="btn refresh-btn" onclick="loadJobs()">
+                    🔄 Refresh
+                </button>
+            </div>
+            <div class="card-body p-4">
+                <!-- Stats -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <span class="badge bg-primary" id="totalBadge">Total: 0</span>
+                        <span class="badge bg-warning text-dark" id="pendingBadge">Pending: 0</span>
+                        <span class="badge bg-info" id="inProgressBadge">In Progress: 0</span>
+                        <span class="badge bg-success" id="completedBadge">Completed: 0</span>
+                        <span class="badge bg-danger" id="failedBadge">Failed: 0</span>
+                    </div>
+                </div>
+
+                <!-- Auto-refresh toggle -->
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="autoRefreshCheck" checked>
+                    <label class="form-check-label" for="autoRefreshCheck">
+                        Auto-refresh every 5 seconds
+                    </label>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading jobs...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <h4>No jobs yet</h4>
+                    <p class="text-muted">Create your first scraping job to get started</p>
+                    <a href="/static/index.html" class="btn btn-primary mt-3">Create New Job</a>
+                </div>
+
+                <!-- Jobs Container -->
+                <div id="jobsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let autoRefreshInterval = null;
+
+        // Load jobs on page load
+        window.addEventListener('load', () => {
+            loadJobs();
+            setupAutoRefresh();
+        });
+
+        async function loadJobs() {
+            const loading = document.getElementById('loading');
+            const emptyState = document.getElementById('emptyState');
+            const jobsContainer = document.getElementById('jobsContainer');
+
+            // Show loading
+            loading.style.display = 'block';
+            emptyState.style.display = 'none';
+            jobsContainer.innerHTML = '';
+
+            try {
+                const response = await fetch('/api/jobs/?limit=50&offset=0');
+                const jobs = await response.json();
+
+                loading.style.display = 'none';
+
+                if (jobs.length === 0) {
+                    emptyState.style.display = 'block';
+                    updateStats([]);
+                    return;
+                }
+
+                renderJobs(jobs);
+                updateStats(jobs);
+
+            } catch (error) {
+                loading.style.display = 'none';
+                jobsContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Error!</strong> Failed to load jobs: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function renderJobs(jobs) {
+            const container = document.getElementById('jobsContainer');
+
+            jobs.forEach(job => {
+                const jobCard = document.createElement('div');
+                jobCard.className = 'job-card';
+
+                const createdDate = new Date(job.created_at).toLocaleString();
+                const completedDate = job.completed_at
+                    ? new Date(job.completed_at).toLocaleString()
+                    : 'N/A';
+
+                const statusClass = `status-${job.status}`;
+                const statusText = job.status.replace('_', ' ').toUpperCase();
+
+                jobCard.innerHTML = `
+                    <div class="job-header">
+                        <div class="flex-grow-1">
+                            <div class="job-url">${escapeHtml(job.blog_url)}</div>
+                            <div class="mt-2">
+                                <small class="text-muted">Job ID: ${job.id}</small>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="status-badge ${statusClass}">${statusText}</span>
+                        </div>
+                    </div>
+
+                    <div class="job-stats">
+                        <div class="stat-item">
+                            📅 Created: ${createdDate}
+                        </div>
+                        ${job.completed_at ? `
+                            <div class="stat-item">
+                                ✅ Completed: ${completedDate}
+                            </div>
+                        ` : ''}
+                        ${job.pages_scraped !== null && job.pages_scraped !== undefined ? `
+                            <div class="stat-item">
+                                📄 Pages: ${job.pages_scraped}
+                            </div>
+                        ` : ''}
+                        ${job.posts_found !== null && job.posts_found !== undefined ? `
+                            <div class="stat-item">
+                                📝 Posts: ${job.posts_found}
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    ${job.error_message ? `
+                        <div class="error-message">
+                            <strong>Error:</strong> ${escapeHtml(job.error_message)}
+                        </div>
+                    ` : ''}
+                `;
+
+                container.appendChild(jobCard);
+            });
+        }
+
+        function updateStats(jobs) {
+            const stats = {
+                total: jobs.length,
+                pending: 0,
+                in_progress: 0,
+                completed: 0,
+                failed: 0
+            };
+
+            jobs.forEach(job => {
+                if (job.status === 'pending') stats.pending++;
+                else if (job.status === 'in_progress') stats.in_progress++;
+                else if (job.status === 'completed') stats.completed++;
+                else if (job.status === 'failed') stats.failed++;
+            });
+
+            document.getElementById('totalBadge').textContent = `Total: ${stats.total}`;
+            document.getElementById('pendingBadge').textContent = `Pending: ${stats.pending}`;
+            document.getElementById('inProgressBadge').textContent = `In Progress: ${stats.in_progress}`;
+            document.getElementById('completedBadge').textContent = `Completed: ${stats.completed}`;
+            document.getElementById('failedBadge').textContent = `Failed: ${stats.failed}`;
+        }
+
+        function setupAutoRefresh() {
+            const checkbox = document.getElementById('autoRefreshCheck');
+
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    startAutoRefresh();
+                } else {
+                    stopAutoRefresh();
+                }
+            });
+
+            // Start if checked
+            if (checkbox.checked) {
+                startAutoRefresh();
+            }
+        }
+
+        function startAutoRefresh() {
+            if (autoRefreshInterval) return;
+
+            autoRefreshInterval = setInterval(() => {
+                loadJobs();
+            }, 5000);
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
+        });
+    </script>
+</body>
+</html>
