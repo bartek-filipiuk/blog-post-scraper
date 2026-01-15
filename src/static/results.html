@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scraped Posts - Blog Post Scraper</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: none;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 25px;
+        }
+        .post-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .post-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        .post-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .post-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .post-excerpt {
+            color: #555;
+            line-height: 1.6;
+        }
+        .nav-link {
+            color: white !important;
+            font-weight: 500;
+        }
+        .nav-link:hover {
+            color: #ffd700 !important;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        .badge {
+            font-size: 0.85rem;
+            padding: 5px 10px;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            display: none;
+        }
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        .filter-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg mb-4" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 15px;">
+            <div class="container-fluid">
+                <a class="navbar-brand text-white fw-bold" href="/static/index.html">🔍 Blog Scraper</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/static/index.html">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/static/jobs.html">Jobs</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/static/results.html">Results</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Card -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-0">Scraped Posts</h1>
+                    <p class="mb-0 mt-2">View and export blog posts</p>
+                </div>
+                <button class="btn btn-light" onclick="exportPosts()">
+                    📥 Export JSON
+                </button>
+            </div>
+            <div class="card-body p-4">
+                <!-- Filter Section -->
+                <div class="filter-section">
+                    <div class="row align-items-end">
+                        <div class="col-md-6">
+                            <label class="form-label text-white">Filter by Blog URL</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="blogUrlFilter"
+                                placeholder="Enter blog URL to filter..."
+                            >
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label text-white">Posts per page</label>
+                            <select class="form-select" id="limitSelect">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-light w-100" onclick="loadPosts()">
+                                🔍 Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <span class="badge bg-primary" id="totalBadge">Total: 0</span>
+                        <span class="badge bg-secondary" id="showingBadge">Showing: 0</span>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading posts...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <h4>No posts found</h4>
+                    <p class="text-muted">Start a scraping job to see results here</p>
+                    <a href="/static/index.html" class="btn btn-primary mt-3">Create New Job</a>
+                </div>
+
+                <!-- Posts Container -->
+                <div id="postsContainer"></div>
+
+                <!-- Pagination -->
+                <nav aria-label="Posts pagination" id="pagination" style="display: none;">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" id="prevPage">
+                            <a class="page-link" href="#" onclick="changePage(-1)">Previous</a>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link" id="pageInfo">Page 1</span>
+                        </li>
+                        <li class="page-item" id="nextPage">
+                            <a class="page-link" href="#" onclick="changePage(1)">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentOffset = 0;
+        let currentLimit = 50;
+        let totalPosts = 0;
+
+        // Load posts on page load
+        window.addEventListener('load', () => {
+            loadPosts();
+        });
+
+        async function loadPosts() {
+            const loading = document.getElementById('loading');
+            const emptyState = document.getElementById('emptyState');
+            const postsContainer = document.getElementById('postsContainer');
+            const pagination = document.getElementById('pagination');
+
+            const blogUrlFilter = document.getElementById('blogUrlFilter').value.trim();
+            currentLimit = parseInt(document.getElementById('limitSelect').value);
+
+            // Show loading
+            loading.style.display = 'block';
+            emptyState.style.display = 'none';
+            postsContainer.innerHTML = '';
+            pagination.style.display = 'none';
+
+            try {
+                let url = `/api/posts/?limit=${currentLimit}&offset=${currentOffset}`;
+                if (blogUrlFilter) {
+                    url += `&blog_url=${encodeURIComponent(blogUrlFilter)}`;
+                }
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                loading.style.display = 'none';
+
+                if (data.items.length === 0) {
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                totalPosts = data.total;
+                renderPosts(data.items);
+                updatePagination(data);
+
+            } catch (error) {
+                loading.style.display = 'none';
+                postsContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Error!</strong> Failed to load posts: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function renderPosts(posts) {
+            const container = document.getElementById('postsContainer');
+
+            posts.forEach(post => {
+                const postCard = document.createElement('div');
+                postCard.className = 'post-card';
+
+                const postDate = post.published_date
+                    ? new Date(post.published_date).toLocaleDateString()
+                    : 'Unknown date';
+
+                const scrapedDate = new Date(post.scraped_at).toLocaleString();
+
+                postCard.innerHTML = `
+                    <div class="post-title">${escapeHtml(post.title || 'Untitled')}</div>
+                    <div class="post-meta">
+                        ${post.author ? `<span>✍️ ${escapeHtml(post.author)}</span> • ` : ''}
+                        <span>📅 ${postDate}</span> •
+                        <span>🔗 <a href="${escapeHtml(post.url)}" target="_blank">View Original</a></span>
+                    </div>
+                    ${post.excerpt ? `<div class="post-excerpt">${escapeHtml(post.excerpt)}</div>` : ''}
+                    <div class="mt-2">
+                        <small class="text-muted">Scraped: ${scrapedDate} from ${escapeHtml(post.blog_url)}</small>
+                    </div>
+                `;
+
+                container.appendChild(postCard);
+            });
+
+            // Update badges
+            document.getElementById('totalBadge').textContent = `Total: ${totalPosts}`;
+            document.getElementById('showingBadge').textContent = `Showing: ${posts.length}`;
+        }
+
+        function updatePagination(data) {
+            const pagination = document.getElementById('pagination');
+            const prevPage = document.getElementById('prevPage');
+            const nextPage = document.getElementById('nextPage');
+            const pageInfo = document.getElementById('pageInfo');
+
+            const currentPage = Math.floor(currentOffset / currentLimit) + 1;
+            const totalPages = Math.ceil(data.total / currentLimit);
+
+            if (totalPages > 1) {
+                pagination.style.display = 'block';
+                pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+
+                if (currentOffset === 0) {
+                    prevPage.classList.add('disabled');
+                } else {
+                    prevPage.classList.remove('disabled');
+                }
+
+                if (currentOffset + currentLimit >= data.total) {
+                    nextPage.classList.add('disabled');
+                } else {
+                    nextPage.classList.remove('disabled');
+                }
+            }
+        }
+
+        function changePage(direction) {
+            currentOffset += direction * currentLimit;
+            if (currentOffset < 0) currentOffset = 0;
+            loadPosts();
+        }
+
+        async function exportPosts() {
+            try {
+                const response = await fetch('/api/posts/export/json');
+                const data = await response.json();
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `blog-posts-export-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                alert('Failed to export posts: ' + error.message);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
