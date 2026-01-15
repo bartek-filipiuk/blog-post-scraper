@@ -49,6 +49,7 @@ htmlcov/
 # Ralph Loop
 .ralph-state.json
 .ralph-techleader-state.json
+.ralph-execution-state.json
 .ralph-execution.log
 .ralph-blocked.log
 .ralph-progress.log
