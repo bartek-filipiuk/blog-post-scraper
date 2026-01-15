@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Post Scraper</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: none;
+            border-radius: 15px;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 25px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .alert {
+            border-radius: 10px;
+            display: none;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .nav-link {
+            color: white !important;
+            font-weight: 500;
+        }
+        .nav-link:hover {
+            color: #ffd700 !important;
+        }
+        #loading {
+            display: none;
+        }
+        .spinner-border {
+            width: 20px;
+            height: 20px;
+            border-width: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg mb-4" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 15px;">
+            <div class="container-fluid">
+                <a class="navbar-brand text-white fw-bold" href="/static/index.html">🔍 Blog Scraper</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/static/index.html">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/static/jobs.html">Jobs</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/static/results.html">Results</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Card -->
+        <div class="card">
+            <div class="card-header">
+                <h1 class="mb-0">Blog Post Scraper</h1>
+                <p class="mb-0 mt-2">Extract blog posts with pagination support</p>
+            </div>
+            <div class="card-body p-4">
+                <!-- Success/Error Alerts -->
+                <div id="successAlert" class="alert alert-success" role="alert">
+                    <strong>Success!</strong> Scraping job created. <a href="/static/jobs.html" class="alert-link">View jobs</a>
+                </div>
+                <div id="errorAlert" class="alert alert-danger" role="alert">
+                    <strong>Error!</strong> <span id="errorMessage"></span>
+                </div>
+
+                <!-- Job Submission Form -->
+                <form id="scrapingForm">
+                    <div class="mb-4">
+                        <label for="blogUrl" class="form-label">Blog URL</label>
+                        <input
+                            type="url"
+                            class="form-control form-control-lg"
+                            id="blogUrl"
+                            name="url"
+                            placeholder="https://example.com/blog"
+                            required
+                        >
+                        <div class="form-text">Enter the URL of the blog you want to scrape</div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <span id="btnText">Start Scraping</span>
+                            <span id="loading" class="spinner-border spinner-border-sm ms-2" role="status"></span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Features -->
+                <div class="row mt-5">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="feature-icon mb-2">📄</div>
+                        <h6>Pagination</h6>
+                        <small class="text-muted">Automatically follows next page links</small>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="feature-icon mb-2">🤖</div>
+                        <h6>Human-like</h6>
+                        <small class="text-muted">Rate limiting prevents detection</small>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="feature-icon mb-2">💾</div>
+                        <h6>JSON Export</h6>
+                        <small class="text-muted">Export scraped posts as JSON</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Health -->
+        <div class="text-center mt-3">
+            <small class="text-white">API Status: <span id="apiStatus">Checking...</span></small>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Check API health on load
+        fetch('/health')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('apiStatus').innerHTML = '<span class="badge bg-success">✓ Healthy</span>';
+            })
+            .catch(err => {
+                document.getElementById('apiStatus').innerHTML = '<span class="badge bg-danger">✗ Offline</span>';
+            });
+
+        // Form submission
+        document.getElementById('scrapingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const url = document.getElementById('blogUrl').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const loading = document.getElementById('loading');
+            const successAlert = document.getElementById('successAlert');
+            const errorAlert = document.getElementById('errorAlert');
+
+            // Hide alerts
+            successAlert.style.display = 'none';
+            errorAlert.style.display = 'none';
+
+            // Show loading
+            submitBtn.disabled = true;
+            btnText.textContent = 'Creating job...';
+            loading.style.display = 'inline-block';
+
+            try {
+                const response = await fetch('/api/jobs/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Failed to create job');
+                }
+
+                // Success
+                successAlert.style.display = 'block';
+                document.getElementById('scrapingForm').reset();
+
+                // Redirect to jobs page after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '/static/jobs.html';
+                }, 2000);
+
+            } catch (error) {
+                // Error
+                document.getElementById('errorMessage').textContent = error.message;
+                errorAlert.style.display = 'block';
+            } finally {
+                // Reset button
+                submitBtn.disabled = false;
+                btnText.textContent = 'Start Scraping';
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
