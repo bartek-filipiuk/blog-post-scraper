@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 from pydantic import Field
 from typing import Optional
 import structlog
+import logging
 
 
 class Settings(BaseSettings):
@@ -90,6 +91,9 @@ def configure_logging(log_level: str = "INFO") -> None:
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     """
+    # Map log level string to logging level constant
+    log_level_value = getattr(logging, log_level.upper(), logging.INFO)
+
     structlog.configure(
         processors=[
             structlog.contextvars.merge_contextvars,
@@ -99,9 +103,7 @@ def configure_logging(log_level: str = "INFO") -> None:
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.dev.ConsoleRenderer() if log_level == "DEBUG" else structlog.processors.JSONRenderer(),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(
-            getattr(structlog.stdlib, log_level.upper(), structlog.stdlib.INFO)
-        ),
+        wrapper_class=structlog.make_filtering_bound_logger(log_level_value),
         context_class=dict,
         logger_factory=structlog.PrintLoggerFactory(),
         cache_logger_on_first_use=True,
