@@ -7,7 +7,7 @@ import os
 
 from src.config import settings, get_logger
 from src.database import init_db
-from src.api.routes import jobs
+from src.api.routes import jobs, posts
 
 logger = get_logger(__name__)
 
@@ -29,6 +29,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(jobs.router)
+app.include_router(posts.router)
 
 # Mount static files
 static_dir = os.path.join(os.path.dirname(__file__), "static")
