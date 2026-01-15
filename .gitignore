@@ -53,6 +53,7 @@ htmlcov/
 .ralph-execution.log
 .ralph-blocked.log
 .ralph-progress.log
+run-ralph.sh
 
 # Logs
 *.log
