@@ -70,24 +70,44 @@ The scraper uses a **two-phase approach** to extract full blog post content:
 
 ## API Usage
 
+### Create Scraping Job
+
+```bash
+# Basic usage (scrapes up to 10 listing pages by default)
+curl -X POST http://127.0.0.1:8001/api/jobs/ \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/blog/"}'
+
+# Limit to 3 listing pages (faster, fewer posts)
+curl -X POST http://127.0.0.1:8001/api/jobs/ \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/blog/", "max_pages": 3}'
+
+# Response: {"id": "550e8400-...", "status": "pending", ...}
+```
+
+**Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `url` | string | required | Blog URL to scrape |
+| `max_pages` | integer | 10 | Maximum listing pages to scrape (1-100) |
+
 ### Complete Workflow Example
 
 ```bash
 # 1. Start the server
 python -m uvicorn src.main:app --host 127.0.0.1 --port 8001
 
-# 2. Create scraping job
+# 2. Create scraping job (limit to 5 pages)
 curl -X POST http://127.0.0.1:8001/api/jobs/ \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com/blog/"}'
-
-# Response: {"id": "550e8400-...", "status": "pending", ...}
+  -d '{"url": "https://example.com/blog/", "max_pages": 5}'
 
 # 3. Check job status (wait ~60 seconds for completion)
 curl http://127.0.0.1:8001/api/jobs/550e8400-...
 
-# 4. Get scraped posts
-curl "http://127.0.0.1:8001/api/posts/?limit=10"
+# 4. Get scraped posts (with pagination)
+curl "http://127.0.0.1:8001/api/posts/?limit=10&offset=0"
 
 # 5. Export all posts to JSON file
 curl "http://127.0.0.1:8001/api/posts/export/json" > posts.json
