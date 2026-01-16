@@ -1,10 +1,11 @@
 """Blog posts API endpoints."""
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import List
 import uuid
+import json
 from datetime import datetime
 
 from src.database import get_db
@@ -69,16 +70,43 @@ async def get_post(post_id: str, db: AsyncSession = Depends(get_db)):
     return post
 
 
-@router.get("/export/json", response_model=ExportResponse)
+@router.get("/export/json")
 async def export_posts(db: AsyncSession = Depends(get_db)):
-    """Export all posts as JSON."""
+    """Export all posts as formatted JSON file."""
     result = await db.execute(
         select(BlogPost).order_by(BlogPost.scraped_at.desc())
     )
     posts = result.scalars().all()
 
-    return {
-        "posts": posts,
-        "exported_at": datetime.utcnow(),
-        "total_posts": len(posts)
+    # Convert posts to dict format
+    posts_data = [
+        {
+            "id": str(post.id),
+            "blog_url": post.blog_url,
+            "title": post.title,
+            "author": post.author,
+            "published_date": post.published_date.isoformat() if post.published_date else None,
+            "content": post.content,
+            "excerpt": post.excerpt,
+            "images": post.images,
+            "scraped_at": post.scraped_at.isoformat() if post.scraped_at else None
+        }
+        for post in posts
+    ]
+
+    export_data = {
+        "posts": posts_data,
+        "exported_at": datetime.utcnow().isoformat(),
+        "total_posts": len(posts_data)
     }
+
+    # Return pretty-printed JSON with proper formatting
+    json_content = json.dumps(export_data, indent=2, ensure_ascii=False)
+
+    return Response(
+        content=json_content,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": "attachment; filename=exported_posts.json"
+        }
+    )
