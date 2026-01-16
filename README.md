@@ -1,8 +1,8 @@
 # Blog Post Scraper
 
-> ⚠️ **EXPERIMENTAL PROJECT - DO NOT USE IN PRODUCTION**
+> ⚠️ **EXPERIMENTAL PROJECT - NOT FOR PRODUCTION USE**
 >
-> This is an experimental autonomous system built for research and learning purposes. May contain bugs, security vulnerabilities, or unexpected behavior. **Use at your own risk for educational purposes only.**
+> This is an experimental project for **personal local use only**. Built for research and learning purposes. May contain bugs, security vulnerabilities, or unexpected behavior. **Do not deploy to production environments. Use at your own risk for educational purposes only.**
 
 ---
 
@@ -30,15 +30,20 @@ A web scraping system for extracting blog posts with pagination support, rate li
 
 ## How It Works
 
-The scraper follows a 5-stage pipeline:
+The scraper uses a **two-phase approach** to extract full blog post content:
 
+**Phase 1: Collect Post URLs**
 1. **API Request** - Submit blog URL via REST API (FastAPI endpoint)
-2. **Browser Automation** - Playwright launches headless Chromium, navigates to URL, waits for JavaScript execution
-3. **HTML Parsing** - BeautifulSoup extracts posts using CSS selectors (title, content, images, metadata)
+2. **Browser Automation** - Playwright launches headless Chromium, navigates to URL, waits for JavaScript
+3. **Listing Page Parsing** - BeautifulSoup extracts post URLs and metadata from listing pages
 4. **Pagination** - Automatically detects "Next" links and follows them (up to 10 pages)
-5. **Storage** - Saves posts to SQLite database via SQLAlchemy async ORM
 
-**Key Features**: Rate limiting (2-5s random delays), retry logic (4 attempts with exponential backoff), SSRF prevention (blocks localhost/private IPs), multi-post extraction (all posts from listing pages).
+**Phase 2: Fetch Full Content**
+5. **Individual Post Fetching** - Visits each post URL to extract complete article content
+6. **Content Merging** - Combines listing metadata with full post content
+7. **Storage** - Saves posts to SQLite database via SQLAlchemy async ORM
+
+**Key Features**: Two-phase scraping (full content, not just teasers), rate limiting (2-5s random delays), retry logic (4 attempts with exponential backoff), SSRF prevention (blocks localhost/private IPs).
 
 ## Quick Start
 
@@ -168,7 +173,7 @@ For detailed usage instructions, examples, and API reference:
 
 ## Recent Test Results
 
-✅ **Goodway HVAC Blog** - 51 posts from 10 pages
+✅ **Goodway HVAC Blog** - 50 posts with full content from 10 pages
 ✅ **Droptica AI Blog** - 14 posts from 3 pages
 
 ## License
