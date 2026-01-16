@@ -222,13 +222,13 @@ To change: Update `MAX_CONCURRENT_JOBS` in `.env` or `src/config.py`
 
 ## Examples
 
-### Scrape Goodway HVAC Blog
+### Scrape HVAC Blog
 
 ```bash
 # 1. Create job
 JOB_ID=$(curl -s -X POST http://127.0.0.1:8001/api/jobs/ \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://www.goodway.com/hvac-blog/"}' \
+  -d '{"url": "https://example.com/blog/"}' \
   | python -c "import sys, json; print(json.load(sys.stdin)['id'])")
 
 echo "Job created: $JOB_ID"

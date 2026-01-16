@@ -585,7 +585,7 @@ export MAX_PAGES_DEFAULT=146
 # 3. Run scraping job
 curl -X POST http://127.0.0.1:8001/api/jobs/ \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://www.goodway.com/hvac-blog/"}'
+  -d '{"url": "https://example.com/blog/"}'
 
 # 4. Monitor progress
 watch -n 5 'curl -s http://127.0.0.1:8001/api/jobs/{JOB_ID} | jq'
@@ -604,7 +604,7 @@ watch -n 5 'curl -s http://127.0.0.1:8001/api/jobs/{JOB_ID} | jq'
 for i in {1..3}; do
   curl -X POST http://127.0.0.1:8001/api/jobs/ \
     -H "Content-Type: application/json" \
-    -d '{"url": "https://www.goodway.com/hvac-blog/"}' &
+    -d '{"url": "https://example.com/blog/"}' &
 done
 
 # Monitor database locks

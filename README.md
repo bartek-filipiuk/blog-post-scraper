@@ -79,7 +79,7 @@ python -m uvicorn src.main:app --host 127.0.0.1 --port 8001
 # 2. Create scraping job
 curl -X POST http://127.0.0.1:8001/api/jobs/ \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://www.goodway.com/hvac-blog/"}'
+  -d '{"url": "https://example.com/blog/"}'
 
 # Response: {"id": "550e8400-...", "status": "pending", ...}
 
@@ -173,7 +173,7 @@ For detailed usage instructions, examples, and API reference:
 
 ## Recent Test Results
 
-✅ **Goodway HVAC Blog** - 50 posts with full content from 10 pages
+✅ **HVAC Blog** - 50 posts with full content from 10 pages
 ✅ **Droptica AI Blog** - 14 posts from 3 pages
 
 ## License

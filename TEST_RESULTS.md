@@ -2,9 +2,9 @@
 
 ## Date: 2026-01-16
 
-### Test 1: JSON Export from Goodway Blog
+### Test 1: JSON Export from Blog
 
-**Test Objective**: Export 5 posts from https://www.goodway.com/hvac-blog/page/2/ and verify JSON structure
+**Test Objective**: Export 5 posts from a blog and verify JSON structure
 
 **Results**:
 - ✅ **Scraping Job**: Completed successfully
@@ -31,7 +31,7 @@
   "posts": [
     {
       "id": "uuid",
-      "blog_url": "https://www.goodway.com/hvac-blog/",
+      "blog_url": "https://example.com/blog/",
       "title": "Post Title",
       "author": null,
       "published_date": null,
