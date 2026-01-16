@@ -174,7 +174,7 @@ For detailed usage instructions, examples, and API reference:
 ## Recent Test Results
 
 ✅ **HVAC Blog** - 50 posts with full content from 10 pages
-✅ **Droptica AI Blog** - 14 posts from 3 pages
+✅ **Tech Blog** - 14 posts from 3 pages
 
 ## License
 

@@ -95,14 +95,14 @@ curl -s "http://127.0.0.1:8001/api/posts/?limit=1" | python -c "import sys,json;
 - **1 page:** ~5-10 seconds
 - **10 pages:** ~40-60 seconds
 - **Large blog (50 posts):** ~60 seconds
-- **Droptica blog (14 posts):** ~20 seconds
+- **Small blog (14 posts):** ~20 seconds
 
 ---
 
 ## Tested Blogs
 
 ✅ **HVAC Blog** - 50 posts scraped successfully
-✅ **Droptica AI** - 14 posts scraped successfully
+✅ **Tech Blog** - 14 posts scraped successfully
 
 Works with most WordPress, Ghost, Medium, and custom blog platforms.
 

@@ -1,0 +1,22 @@
+{
+  "exported_at": "2026-01-16T08:30:00",
+  "total_posts": 1,
+  "posts": [
+    {
+      "id": "61c55135-5cac-4069-a01f-278c01bfe659",
+      "blog_url": "https://example.com/blog/",
+      "post_url": "https://example.com/blog/2022/04/complete-guide-to-industrial-cleaning/",
+      "title": "The Complete Guide to Industrial Cleaning",
+      "author": "Jane Smith",
+      "published_date": "2022-04-15T10:00:00",
+      "content": "The Complete Guide to Industrial Cleaning\n\nIndustrial cleaning is essential for maintaining safe and efficient operations in commercial facilities. This comprehensive guide covers everything you need to know about industrial cleaning best practices.\n\nWhy Industrial Cleaning Matters\n\nRegular industrial cleaning prevents equipment damage, reduces maintenance costs, and ensures compliance with safety regulations. Facilities that implement proper cleaning protocols see significant improvements in operational efficiency.\n\nKey Benefits:\n- Extended equipment lifespan\n- Reduced downtime and maintenance costs\n- Improved workplace safety\n- Compliance with environmental regulations\n- Better air quality for employees\n\nTypes of Industrial Cleaning\n\n1. Pressure Washing\nHigh-pressure water cleaning is effective for removing dirt, grime, and tough stains from surfaces. It's commonly used for:\n- Sidewalk and floor cleaning\n- Equipment exterior cleaning\n- Building facade maintenance\n\n2. Chemical Cleaning\nSpecialized chemical solutions dissolve mineral deposits and scale buildup in:\n- Heat exchangers\n- Boilers and chillers\n- Cooling towers\n- Plumbing systems\n\n3. Vacuum Systems\nIndustrial vacuums handle hazardous materials and combustible dust in:\n- Manufacturing facilities\n- Food processing plants\n- Pharmaceutical operations\n\nBest Practices\n\nSchedule regular maintenance cleaning to prevent buildup. Document all cleaning procedures and maintain records for compliance audits. Train staff on proper chemical handling and safety protocols.\n\nConclusion\n\nImplementing a comprehensive industrial cleaning program protects your equipment investment and ensures a safe working environment. Contact a professional cleaning service to assess your facility's specific needs.",
+      "excerpt": "Industrial cleaning is essential for maintaining safe and efficient operations in commercial facilities. This comprehensive guide covers everything you need to know...",
+      "images": [
+        "https://example.com/blog/images/industrial-cleaning-hero.jpg",
+        "https://example.com/blog/images/pressure-washer.jpg",
+        "https://example.com/blog/images/cleaning-equipment.jpg"
+      ],
+      "scraped_at": "2026-01-16T08:25:00"
+    }
+  ]
+}

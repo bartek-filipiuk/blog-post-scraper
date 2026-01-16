@@ -91,7 +91,7 @@ curl -X POST http://127.0.0.1:8001/api/jobs/ \
 ## Tested On
 
 - ✅ HVAC blog - 50 posts
-- ✅ Droptica AI blog - 14 posts
+- ✅ Tech blog - 14 posts
 - ✅ WordPress sites
 - ✅ Custom blog platforms
 
