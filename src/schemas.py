@@ -82,6 +82,7 @@ class BlogPostCreate(BaseModel):
     """Schema for creating a blog post."""
 
     blog_url: str = Field(..., max_length=2048)
+    post_url: Optional[str] = Field(None, max_length=2048)
     title: str = Field(..., max_length=1024)
     author: Optional[str] = Field(None, max_length=256)
     published_date: Optional[datetime] = None
@@ -93,6 +94,7 @@ class BlogPostCreate(BaseModel):
         json_schema_extra={
             "example": {
                 "blog_url": "https://example.com/blog",
+                "post_url": "https://example.com/blog/my-post",
                 "title": "10 Tips for Python Development",
                 "author": "Jane Doe",
                 "published_date": "2026-01-15T10:00:00Z",
@@ -109,6 +111,7 @@ class BlogPostResponse(BaseModel):
 
     id: UUID
     blog_url: str
+    post_url: Optional[str]
     title: str
     author: Optional[str]
     published_date: Optional[datetime]
@@ -123,6 +126,7 @@ class BlogPostResponse(BaseModel):
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "blog_url": "https://example.com/blog",
+                "post_url": "https://example.com/blog/my-post",
                 "title": "10 Tips for Python Development",
                 "author": "Jane Doe",
                 "published_date": "2026-01-15T10:00:00Z",

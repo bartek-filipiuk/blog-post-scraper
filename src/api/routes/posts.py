@@ -83,6 +83,7 @@ async def export_posts(db: AsyncSession = Depends(get_db)):
         {
             "id": str(post.id),
             "blog_url": post.blog_url,
+            "post_url": post.post_url,
             "title": post.title,
             "author": post.author,
             "published_date": post.published_date.isoformat() if post.published_date else None,

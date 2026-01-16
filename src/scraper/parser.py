@@ -153,16 +153,53 @@ def _extract_post_from_container(container: BeautifulSoup, base_url: str) -> Dic
     Returns:
         dict: Parsed blog post data
     """
-    # Extract title from container
+    # Extract title and post URL from container
     title = ""
+    post_url = None
     title_elem = container.find(['h1', 'h2', 'h3', 'h4'])
     if title_elem:
-        # If title has a link, get the link text
+        # If title has a link, get both the link text and URL
         link = title_elem.find('a')
         if link:
             title = link.get_text(strip=True)
+            href = link.get('href')
+            if href:
+                post_url = urljoin(base_url, href)
         else:
             title = title_elem.get_text(strip=True)
+
+    # If no post URL from title, try "Read more" or similar links
+    if not post_url:
+        read_more_patterns = [
+            re.compile(r'read\s*more', re.I),
+            re.compile(r'continue\s*reading', re.I),
+            re.compile(r'full\s*(article|post|story)', re.I),
+            re.compile(r'learn\s*more', re.I),
+        ]
+        for pattern in read_more_patterns:
+            read_more = container.find('a', string=pattern)
+            if not read_more:
+                # Try finding link with matching text content
+                for link in container.find_all('a', href=True):
+                    if pattern.search(link.get_text(strip=True)):
+                        read_more = link
+                        break
+            if read_more:
+                href = read_more.get('href')
+                if href:
+                    post_url = urljoin(base_url, href)
+                    break
+
+    # If still no URL, try the first link in the container that looks like a post URL
+    if not post_url:
+        for link in container.find_all('a', href=True):
+            href = link.get('href')
+            if href and not href.startswith('#'):
+                # Avoid pagination, category, or tag links
+                href_lower = href.lower()
+                if not any(skip in href_lower for skip in ['/page/', '/category/', '/tag/', '/author/', '?page=']):
+                    post_url = urljoin(base_url, href)
+                    break
 
     # Extract author from container
     author = None
@@ -208,6 +245,7 @@ def _extract_post_from_container(container: BeautifulSoup, base_url: str) -> Dic
 
     return {
         "title": title,
+        "post_url": post_url,
         "author": author,
         "published_date": published_date,
         "content": content,

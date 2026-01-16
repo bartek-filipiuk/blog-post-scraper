@@ -34,6 +34,7 @@ class BlogPost(Base):
 
     # Blog and post information
     blog_url = Column(String(2048), nullable=False, index=True)
+    post_url = Column(String(2048), nullable=True)  # Individual post URL for full content
     title = Column(String(1024), nullable=False)
     author = Column(String(256), nullable=True)
     published_date = Column(DateTime, nullable=True)
@@ -65,6 +66,7 @@ class BlogPost(Base):
         return {
             "id": str(self.id),
             "blog_url": self.blog_url,
+            "post_url": self.post_url,
             "title": self.title,
             "author": self.author,
             "published_date": self.published_date.isoformat() if self.published_date else None,
