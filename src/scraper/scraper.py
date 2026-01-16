@@ -5,7 +5,7 @@ from datetime import datetime
 
 from src.scraper.url_validator import validate_url_strict
 from src.scraper.fetcher import HTMLFetcher
-from src.scraper.parser import parse_blog_post, find_next_page_link
+from src.scraper.parser import parse_blog_listing, find_next_page_link
 from src.config import get_logger
 
 logger = get_logger(__name__)
@@ -65,12 +65,15 @@ async def scrape_blog(
                 html = await fetcher.fetch_page(current_url)
                 stats.pages_scraped += 1
 
-                # Parse blog post
-                post_data = parse_blog_post(html, current_url)
-                post_data["blog_url"] = blog_url
-                post_data["scraped_at"] = datetime.utcnow()
-                posts.append(post_data)
-                stats.posts_found += 1
+                # Parse blog posts from page (may return multiple posts)
+                page_posts = parse_blog_listing(html, current_url)
+                for post_data in page_posts:
+                    post_data["blog_url"] = blog_url
+                    post_data["scraped_at"] = datetime.utcnow()
+                    posts.append(post_data)
+                    stats.posts_found += 1
+
+                logger.info(f"Found {len(page_posts)} posts on page {page_num + 1}")
 
                 # Find next page
                 next_url = find_next_page_link(html, current_url)

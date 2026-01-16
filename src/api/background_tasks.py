@@ -1,5 +1,6 @@
 """Background task execution for scraping jobs."""
 import asyncio
+import uuid
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,15 +19,19 @@ async def run_scraping_job(job_id: str) -> None:
     """Execute scraping job in background.
 
     Args:
-        job_id: UUID of the scraping job
+        job_id: UUID string of the scraping job
     """
     async with _job_semaphore:
         logger.info("Starting scraping job", job_id=job_id)
 
         async with AsyncSessionLocal() as db:
+            job = None
             try:
+                # Convert job_id string to UUID
+                job_uuid = uuid.UUID(job_id)
+
                 # Get job
-                job = await db.get(ScrapingJob, job_id)
+                job = await db.get(ScrapingJob, job_uuid)
                 if not job:
                     logger.error("Job not found", job_id=job_id)
                     return

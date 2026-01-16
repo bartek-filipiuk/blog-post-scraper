@@ -1,6 +1,12 @@
 # Blog Post Scraper
 
-A production-ready web scraping system for extracting blog posts with pagination support, rate limiting, and comprehensive security features.
+> ⚠️ **EXPERIMENTAL PROJECT - DO NOT USE IN PRODUCTION**
+>
+> This is an experimental autonomous system built for research and learning purposes. May contain bugs, security vulnerabilities, or unexpected behavior. **Use at your own risk for educational purposes only.**
+
+---
+
+A web scraping system for extracting blog posts with pagination support, rate limiting, and comprehensive security features.
 
 ## Features
 
@@ -21,6 +27,18 @@ A production-ready web scraping system for extracting blog posts with pagination
 - **BeautifulSoup**: HTML parsing and content extraction
 - **Pydantic**: Data validation and settings management
 - **structlog**: Structured logging for debugging
+
+## How It Works
+
+The scraper follows a 5-stage pipeline:
+
+1. **API Request** - Submit blog URL via REST API (FastAPI endpoint)
+2. **Browser Automation** - Playwright launches headless Chromium, navigates to URL, waits for JavaScript execution
+3. **HTML Parsing** - BeautifulSoup extracts posts using CSS selectors (title, content, images, metadata)
+4. **Pagination** - Automatically detects "Next" links and follows them (up to 10 pages)
+5. **Storage** - Saves posts to SQLite database via SQLAlchemy async ORM
+
+**Key Features**: Rate limiting (2-5s random delays), retry logic (4 attempts with exponential backoff), SSRF prevention (blocks localhost/private IPs), multi-post extraction (all posts from listing pages).
 
 ## Quick Start
 
@@ -47,25 +65,36 @@ A production-ready web scraping system for extracting blog posts with pagination
 
 ## API Usage
 
-### Create Job
+### Complete Workflow Example
+
 ```bash
-curl -X POST http://localhost:8000/api/jobs/ -H "Content-Type: application/json" -d '{"url": "https://example.com/blog"}'
+# 1. Start the server
+python -m uvicorn src.main:app --host 127.0.0.1 --port 8001
+
+# 2. Create scraping job
+curl -X POST http://127.0.0.1:8001/api/jobs/ \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.goodway.com/hvac-blog/"}'
+
+# Response: {"id": "550e8400-...", "status": "pending", ...}
+
+# 3. Check job status (wait ~60 seconds for completion)
+curl http://127.0.0.1:8001/api/jobs/550e8400-...
+
+# 4. Get scraped posts
+curl "http://127.0.0.1:8001/api/posts/?limit=10"
+
+# 5. Export all posts to JSON file
+curl "http://127.0.0.1:8001/api/posts/export/json" > posts.json
 ```
 
-### List Jobs
-```bash
-curl http://localhost:8000/api/jobs/
-```
+### UI Usage
 
-### List Posts
-```bash
-curl http://localhost:8000/api/posts/
-```
+**Primary interface**: API (use examples above)
 
-### Export JSON
-```bash
-curl http://localhost:8000/api/posts/export/json > posts.json
-```
+**Interactive API docs**: http://127.0.0.1:8001/docs (Swagger UI - recommended for exploration)
+
+**Basic web UI**: http://127.0.0.1:8001/static/index.html (if available, limited functionality)
 
 ## Configuration
 
@@ -126,6 +155,21 @@ Test Coverage: 106 tests total
 **Slow scraping**: Adjust MIN_DELAY and MAX_DELAY
 
 Enable debug logging: LOG_LEVEL=DEBUG
+
+## Documentation
+
+For detailed usage instructions, examples, and API reference:
+
+📚 **[View Full Documentation →](docs/README.md)**
+
+- [Quick Start Guide](docs/QUICK_START.md) - Get started in 5 minutes
+- [Complete Usage Guide](docs/USAGE.md) - All features and examples
+- [API Reference](http://localhost:8001/docs) - Interactive Swagger docs
+
+## Recent Test Results
+
+✅ **Goodway HVAC Blog** - 51 posts from 10 pages
+✅ **Droptica AI Blog** - 14 posts from 3 pages
 
 ## License
 

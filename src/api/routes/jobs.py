@@ -10,6 +10,7 @@ from src.models import ScrapingJob, JobStatus
 from src.schemas import ScrapingJobCreate, ScrapingJobResponse, URLInput
 from src.scraper.url_validator import validate_url_strict, URLValidationError
 from src.config import get_logger
+from src.api.background_tasks import run_scraping_job
 
 logger = get_logger(__name__)
 
@@ -40,8 +41,9 @@ async def create_job(
     await db.commit()
     await db.refresh(job)
 
-    # Schedule background task (simplified for MVP)
-    logger.info("Job created", job_id=str(job.id), url=job_input.url)
+    # Schedule background task
+    background_tasks.add_task(run_scraping_job, str(job.id))
+    logger.info("Job created and scheduled", job_id=str(job.id), url=job_input.url)
 
     return job
 

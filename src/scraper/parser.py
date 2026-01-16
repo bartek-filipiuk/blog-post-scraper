@@ -10,6 +10,52 @@ from src.config import get_logger
 logger = get_logger(__name__)
 
 
+def parse_blog_listing(html: str, url: str) -> List[Dict[str, any]]:
+    """Parse multiple blog posts from a listing page.
+
+    Args:
+        html: HTML content
+        url: Source URL (for resolving relative URLs)
+
+    Returns:
+        list: List of parsed blog post data dicts
+    """
+    soup = BeautifulSoup(html, 'lxml')
+    posts = []
+
+    # Try to find article containers (common blog listing patterns)
+    article_containers = soup.find_all('article')
+
+    # If no article tags, try common blog post container patterns
+    if not article_containers:
+        article_containers = soup.find_all('div', class_=re.compile(r'post|entry|article', re.I))
+
+    # If still nothing, try to find multiple h2/h3 tags (common for blog listings)
+    if not article_containers:
+        # Look for heading tags that might be post titles
+        headings = soup.find_all(['h2', 'h3'])
+        for heading in headings:
+            # Find the parent container (usually a div or article)
+            container = heading.find_parent(['div', 'article', 'section'])
+            if container and container not in article_containers:
+                article_containers.append(container)
+
+    # If we found multiple containers, extract from each
+    if len(article_containers) > 1:
+        logger.info(f"Found {len(article_containers)} article containers on page", url=url)
+        for container in article_containers:
+            post = _extract_post_from_container(container, url)
+            if post['title']:  # Only add if we got a title
+                posts.append(post)
+    else:
+        # Single post page or no containers found - extract from whole page
+        post = parse_blog_post(html, url)
+        posts.append(post)
+
+    logger.info(f"Parsed {len(posts)} posts from page", url=url)
+    return posts
+
+
 def parse_blog_post(html: str, url: str) -> Dict[str, any]:
     """Parse blog post from HTML content.
 
@@ -70,32 +116,104 @@ def find_next_page_link(html: str, current_url: str) -> Optional[str]:
     """
     soup = BeautifulSoup(html, 'lxml')
 
-    # Common patterns for next page links
+    # Try attribute-based patterns first (fast)
     next_patterns = [
         ('a', {'class': re.compile(r'next', re.I)}),
         ('a', {'rel': 'next'}),
         ('a', {'aria-label': re.compile(r'next', re.I)}),
         ('a', {'title': re.compile(r'next', re.I)}),
-        ('a', {'text': re.compile(r'(next|→|»)', re.I)}),
     ]
 
     for tag, attrs in next_patterns:
-        if 'text' in attrs:
-            # Search by link text
-            links = soup.find_all('a', string=attrs['text'])
-            if links:
-                href = links[0].get('href')
-                if href:
-                    return urljoin(current_url, href)
-        else:
-            link = soup.find(tag, attrs)
-            if link:
-                href = link.get('href')
-                if href:
-                    return urljoin(current_url, href)
+        link = soup.find(tag, attrs)
+        if link:
+            href = link.get('href')
+            if href:
+                return urljoin(current_url, href)
+
+    # Fallback: Text-based search (get_text() works with nested HTML)
+    for link in soup.find_all('a'):
+        text = link.get_text(strip=True)
+        if re.search(r'\b(next|→|»)\b', text, re.I):
+            href = link.get('href')
+            if href and not href.startswith('#'):  # Skip anchor links
+                return urljoin(current_url, href)
 
     logger.debug("No next page link found", url=current_url)
     return None
+
+
+def _extract_post_from_container(container: BeautifulSoup, base_url: str) -> Dict[str, any]:
+    """Extract post data from a single container element.
+
+    Args:
+        container: BeautifulSoup element containing a single post
+        base_url: Base URL for resolving relative URLs
+
+    Returns:
+        dict: Parsed blog post data
+    """
+    # Extract title from container
+    title = ""
+    title_elem = container.find(['h1', 'h2', 'h3', 'h4'])
+    if title_elem:
+        # If title has a link, get the link text
+        link = title_elem.find('a')
+        if link:
+            title = link.get_text(strip=True)
+        else:
+            title = title_elem.get_text(strip=True)
+
+    # Extract author from container
+    author = None
+    author_elem = container.find(['span', 'div', 'a'], class_=re.compile(r'author', re.I))
+    if author_elem:
+        author = author_elem.get_text(strip=True)
+
+    # Extract date from container
+    published_date = None
+    time_elem = container.find('time')
+    if time_elem:
+        datetime_str = time_elem.get('datetime', '') or time_elem.get_text(strip=True)
+        if datetime_str:
+            try:
+                published_date = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+            except:
+                pass
+
+    # Extract content/excerpt from container
+    content = ""
+    # Try to find excerpt/summary first
+    excerpt_elem = container.find(['div', 'p'], class_=re.compile(r'excerpt|summary|description', re.I))
+    if excerpt_elem:
+        content = excerpt_elem.get_text(strip=True, separator='\n')
+    else:
+        # Get all paragraph text
+        paragraphs = container.find_all('p')
+        if paragraphs:
+            content = '\n'.join(p.get_text(strip=True) for p in paragraphs)
+        else:
+            content = container.get_text(strip=True, separator='\n')
+
+    # Generate excerpt
+    excerpt = _generate_excerpt(content)
+
+    # Extract images from container
+    images = []
+    for img in container.find_all('img'):
+        src = img.get('src')
+        if src:
+            absolute_url = urljoin(base_url, src)
+            images.append(absolute_url)
+
+    return {
+        "title": title,
+        "author": author,
+        "published_date": published_date,
+        "content": content,
+        "excerpt": excerpt,
+        "images": images
+    }
 
 
 def _extract_title(soup: BeautifulSoup) -> str:

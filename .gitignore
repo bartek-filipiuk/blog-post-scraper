@@ -58,6 +58,20 @@ run-ralph.sh
 # Logs
 *.log
 
+# Exported/scraped data
+exported_*.json
+scraped_*.json
+*_export.json
+
+# Project planning files (keep docs/ but ignore planning docs)
+HANDOFF_STAGES_PLAN.md
+PROJECT_SUMMARY.md
+PRD.md
+TECH_STACK.md
+RALPH_*.md
+ralph-*.txt
+execute-all-tasks.sh
+
 # OS
 .DS_Store
 Thumbs.db
